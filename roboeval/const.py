@@ -1,6 +1,7 @@
 """A set of common constants."""
 from __future__ import annotations
 
+import os
 from enum import Enum, IntEnum
 from pathlib import Path
 
@@ -10,7 +11,7 @@ PACKAGE_PATH = Path(__file__).parent
 THIRD_PARTY_PATH = PACKAGE_PATH.parent / "thirdparty"
 ASSETS_PATH = PACKAGE_PATH / "envs" / "xmls"
 PRESETS_PATH = PACKAGE_PATH / "envs" / "presets"
-CACHE_PATH = Path.home() / ".roboeval"
+CACHE_PATH = Path(os.environ.get("ROBOEVAL_CACHE", Path.home() / "nas" / "dataset" / "roboeval"))
 
 DEMO_RELEASES = "https://github.com/helen9975/RoboEval_data/releases/download"
 DEMO_VERSION = "1.0.0"

@@ -1,0 +1,36 @@
+| Task variant | Demos | Successes | Failures | Success rate | Succeeded at some point |
+| --- | --- | --- | --- | --- | --- |
+| StackSingleBookShelfPosition | 101 | 50 | 51 | 49.5% | 68.3% |
+| StackSingleBookShelfPositionAndOrientation | 100 | 55 | 45 | 55.0% | 75.0% |
+| DragOverAndLiftTray | 117 | 70 | 47 | 59.8% | 76.9% |
+| StackSingleBookShelf | 103 | 64 | 39 | 62.1% | 73.8% |
+| StackTwoBlocksPositionAndOrientation | 197 | 124 | 73 | 62.9% | 74.6% |
+| LiftPotPosition | 221 | 141 | 80 | 63.8% | 69.7% |
+| PackBoxOrientation | 184 | 121 | 63 | 65.8% | 65.8% |
+| PackBox | 174 | 123 | 51 | 70.7% | 70.7% |
+| LiftPotPositionAndOrientation | 102 | 80 | 22 | 78.4% | 80.4% |
+| LiftTray | 100 | 79 | 21 | 79.0% | 97.0% |
+| PickSingleBookFromTableOrientation | 100 | 80 | 20 | 80.0% | 83.0% |
+| PickSingleBookFromTablePosition | 116 | 94 | 22 | 81.0% | 84.5% |
+| LiftTrayPosition | 144 | 119 | 25 | 82.6% | 97.9% |
+| StackTwoBlocksOrientation | 100 | 83 | 17 | 83.0% | 94.0% |
+| StackTwoBlocks | 203 | 169 | 34 | 83.3% | 95.6% |
+| LiftPotOrientation | 115 | 98 | 17 | 85.2% | 87.8% |
+| PickSingleBookFromTable | 118 | 101 | 17 | 85.6% | 86.4% |
+| LiftTrayPositionAndOrientation | 204 | 175 | 29 | 85.8% | 100.0% |
+| LiftPot | 104 | 91 | 13 | 87.5% | 93.3% |
+| PickSingleBookFromTablePositionAndOrientation | 104 | 92 | 12 | 88.5% | 89.4% |
+| StackTwoBlocksPosition | 104 | 94 | 10 | 90.4% | 94.2% |
+| PackBoxPosition | 115 | 104 | 11 | 90.4% | 90.4% |
+| RotateValveObstacle | 121 | 110 | 11 | 90.9% | 94.2% |
+| LiftTrayOrientation | 104 | 95 | 9 | 91.3% | 98.1% |
+| RotateValve | 121 | 114 | 7 | 94.2% | 94.2% |
+| CubeHandover | 104 | 98 | 6 | 94.2% | 99.0% |
+| PackBoxPositionAndOrientation | 115 | 109 | 6 | 94.8% | 94.8% |
+| RotateValvePositionAndOrientation | 125 | 120 | 5 | 96.0% | 96.0% |
+| VerticalCubeHandover | 105 | 101 | 4 | 96.2% | 99.0% |
+| CubeHandoverOrientation | 107 | 103 | 4 | 96.3% | 97.2% |
+| CubeHandoverPositionAndOrientation | 105 | 102 | 3 | 97.1% | 100.0% |
+| CubeHandoverPosition | 109 | 108 | 1 | 99.1% | 100.0% |
+| RotateValvePosition | 113 | 112 | 1 | 99.1% | 99.1% |
+| **All variants** | **4155** | **3379** | **776** | **81.3%** | **87.6%** |
