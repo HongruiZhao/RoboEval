@@ -183,8 +183,14 @@ def main() -> None:
                 continue
             env = make_env(variant)
             max_steps = int(np.ceil(cfg["max_steps_factor"] * longest[variant]))
+            """
+                (Hongrui's comment)
+                the smallest demo seed is 2,621,411
+                So no eval episode replays a training layout
+            """
             for i in todo:
-                seed = cfg["seed"] + i
+       
+                seed = cfg["seed"] + i 
                 record = i < cfg["videos_per_task"]
                 t0 = time.time()
                 result, frames = run_episode(env, conn, task_of[variant], seed, max_steps, record)
@@ -194,7 +200,9 @@ def main() -> None:
                     f.write(json.dumps(result) + "\n")
                 done.append(result)
                 if record:
-                    imageio.mimsave(out_dir / "videos" / f"{variant}_ep{i:02d}.mp4", frames, fps=CONTROL_FREQUENCY)
+                    video_dir = out_dir / "videos" / variant
+                    video_dir.mkdir(parents=True, exist_ok=True)
+                    imageio.mimsave(video_dir / f"ep{i:02d}.mp4", frames, fps=CONTROL_FREQUENCY)
                 print(f"[{variant} ep {i}] success={result['success']} steps={result['steps']}/{max_steps} "
                       f"({result['seconds']} s)", flush=True)
             env.close()
@@ -204,7 +212,9 @@ def main() -> None:
         server.wait(timeout=60)
     summarize(done, out_dir)
     print((out_dir / "summary.md").read_text())
+"""
 
+"""
 
 if __name__ == "__main__":
     main()

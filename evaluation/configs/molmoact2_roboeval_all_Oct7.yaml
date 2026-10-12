@@ -1,0 +1,17 @@
+# Evaluation of the Oct 7 run (all 32 variants, randomization-free instructions) at its final checkpoint.
+
+checkpoint: /home/hongrui/nas/outputs/molmoact2_roboeval_all_Oct7/checkpoints/030000
+dataset_root: /home/hongrui/nas/dataset/roboeval_lerobot_ee  # training data: instructions, episode lengths
+output_dir: /home/hongrui/nas/outputs/molmoact2_roboeval_all_Oct7/eval_030000
+
+# LeRobot policy server (separate process in the `molmoact2` conda env)
+policy_python: /home/hongrui/.conda/envs/molmoact2/bin/python
+gpu: 0
+port: 6100
+
+# Task variants (RoboEval env class names); empty list = every variant in the training data.
+tasks: []
+episodes_per_task: 50
+seed: 0                 # episode i uses seed + i
+max_steps_factor: 1.5   # episode cap = factor x longest training demo of that variant
+videos_per_task: 5      # record the first N episodes of each variant (videos/<variant>/epXX.mp4)
