@@ -169,11 +169,11 @@ def main() -> None:
     longest = defaultdict(int)
     for s in sources:
         longest[s["variant"]] = max(longest[s["variant"]], s["length"])
-    variants = cfg.get("tasks") or sorted(task_of)
+    variants = cfg.get("tasks") or sorted(task_of) # if cfg tasks is empty, use sorted(task_of)
 
     episodes_path = out_dir / "episodes.jsonl"
     done = [json.loads(l) for l in episodes_path.read_text().splitlines()] if episodes_path.exists() else []
-    finished = {(e["variant"], e["episode"]) for e in done}
+    finished = {(e["variant"], e["episode"]) for e in done} # for when run gets interrupted and needs to be resumed
 
     server, conn = start_policy_server(cfg)
     try:
