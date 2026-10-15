@@ -37,7 +37,13 @@ AUTHKEY = b"molmoact2-roboeval"
 SERVER_SCRIPT = Path(__file__).resolve().parent / "molmoact2_policy_server.py"
 CAMERAS = ("head", "left_wrist", "right_wrist")
 RESOLUTION = 256
-CONTROL_FREQUENCY = 20  # the training data was recorded at 20 fps
+"""
+    (Hongrui's comment)
+    MuJoCo always runs at a fixed 500 Hz (timestep 0.002 s). 
+    The control frequency decides how many of those physics steps one env.step(action) covers.
+    the training data was recorded at 20 fps
+"""
+CONTROL_FREQUENCY = 20  
 # robot.qpos = [left arm 7, left fingers 2, right arm 7, right fingers 2]
 ARM_QPOS = np.r_[0:7, 9:16]
 EULER_DIMS = [3, 4, 5, 9, 10, 11]
@@ -96,6 +102,11 @@ def ee_state(env) -> np.ndarray:
     return state
 
 
+def family_of(variant: str) -> str:
+    """Task family of a variant, e.g. LiftPotPositionAndOrientation -> LiftPot, RotateValveObstacle -> RotateValve."""
+    return variant.split("Position")[0].split("Orientation")[0].split("Obstacle")[0]
+
+
 def to_json(value):
     if isinstance(value, dict):
         return {str(k): to_json(v) for k, v in value.items()}
@@ -139,7 +150,7 @@ def summarize(episodes: list[dict], out_dir: Path) -> None:
         by_variant[e["variant"]].append(e["success"])
     by_family = defaultdict(list)
     for v, s in by_variant.items():
-        by_family[v.split("Position")[0].split("Orientation")[0].split("Obstacle")[0]].extend(s)
+        by_family[family_of(v)].extend(s)
     rate = lambda s: sum(s) / len(s)
     summary = {
         "overall": {"success_rate": rate([e["success"] for e in episodes]), "episodes": len(episodes)},
@@ -159,17 +170,17 @@ def main() -> None:
     warnings.filterwarnings("ignore")
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True, help="Path to the evaluation config YAML")
-    cfg = yaml.safe_load(parser.parse_args().config.read_text())
+    config_path = parser.parse_args().config
+    cfg = yaml.safe_load(config_path.read_text())
     out_dir = Path(cfg["output_dir"])
     (out_dir / "videos").mkdir(parents=True, exist_ok=True)
+    (out_dir / "config.yaml").write_text(config_path.read_text())  # verbatim copy of the config used
 
-    # Training instruction and longest demo per variant, from the training dataset's sidecar.
+    # Training instruction per variant, from the training dataset's sidecar.
     sources = [json.loads(l) for l in (Path(cfg["dataset_root"]) / "meta/roboeval_source.jsonl").read_text().splitlines()]
     task_of = {s["variant"]: s["task"] for s in sources}
-    longest = defaultdict(int)
-    for s in sources:
-        longest[s["variant"]] = max(longest[s["variant"]], s["length"])
     variants = cfg.get("tasks") or sorted(task_of) # if cfg tasks is empty, use sorted(task_of)
+    max_steps = int(np.ceil(cfg["max_steps_factor"] * max(s["length"] for s in sources))) 
 
     episodes_path = out_dir / "episodes.jsonl"
     done = [json.loads(l) for l in episodes_path.read_text().splitlines()] if episodes_path.exists() else []
@@ -182,7 +193,6 @@ def main() -> None:
             if not todo:
                 continue
             env = make_env(variant)
-            max_steps = int(np.ceil(cfg["max_steps_factor"] * longest[variant]))
             """
                 (Hongrui's comment)
                 the smallest demo seed is 2,621,411

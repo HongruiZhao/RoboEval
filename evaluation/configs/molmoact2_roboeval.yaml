@@ -13,5 +13,5 @@ port: 6100
 tasks: []
 episodes_per_task: 10
 seed: 0                 # episode i uses seed + i
-max_steps_factor: 1.5   # episode cap = factor x longest training demo of that variant
+max_steps_factor: 1.5   # episode cap (all variants) = factor x longest training demo of any variant
 videos_per_task: 2      # record the first N episodes of each variant
