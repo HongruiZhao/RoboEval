@@ -7,7 +7,9 @@ and talks to over a local socket, because the two envs' numpy / mujoco / gymnasi
 The policy was trained on absolute end-effector poses (see Molmoact2_RoboEval
 scripts/roboeval_dataset_generation/compute_ee_poses.py), so observations and actions follow that
 dataset exactly: 14-D [left xyz, left euler-xyz, right xyz, right euler-xyz, left grip, right grip],
-3 cameras at 256x256, 20 Hz control.
+3 cameras at 256x256, 20 Hz control. RoboEval's forward kinematics and EE action mode use rotation vectors
+(since the upstream merge), so the state's rotations are converted rotation vector -> euler before they are
+sent to the policy, and the policy's euler rotations are converted back to rotation vectors before env.step.
 
 Usage (from the RoboEval repo root, `roboeval` env):
     MUJOCO_GL=egl python evaluation/eval_molmoact2.py --config evaluation/configs/molmoact2_roboeval.yaml
@@ -26,6 +28,7 @@ from pathlib import Path
 import imageio
 import numpy as np
 import yaml
+from scipy.spatial.transform import Rotation as R
 
 import roboeval.envs
 from roboeval.action_modes import JointPositionActionMode
@@ -46,7 +49,8 @@ RESOLUTION = 256
 CONTROL_FREQUENCY = 20  
 # robot.qpos = [left arm 7, left fingers 2, right arm 7, right fingers 2]
 ARM_QPOS = np.r_[0:7, 9:16]
-EULER_DIMS = [3, 4, 5, 9, 10, 11]
+# indicies for two eulers angles in the state/action
+ROT_SLICES = (slice(3, 6), slice(9, 12))
 # Must match WRAP_LOW in Molmoact2_RoboEval/scripts/roboeval_dataset_generation/compute_ee_poses.py:
 # index into the 14-D EE vector -> lower bound of its training-data euler range [low, low + 2pi).
 WRAP_LOW = {3: 0.0, 9: 0.0, 5: -5.1, 11: -5.1}
@@ -96,7 +100,10 @@ def make_env(variant: str):
 def ee_state(env) -> np.ndarray:
     """Current 14-D absolute EE state, in the same convention as the training data."""
     robot = env.robot
-    state = np.concatenate([robot.forward_kinematics(robot.qpos[ARM_QPOS]), robot.qpos_grippers]).astype(np.float32)
+    state = np.concatenate([robot.forward_kinematics(robot.qpos[ARM_QPOS]), robot.qpos_grippers]).astype(np.float64)
+    for rot in ROT_SLICES:  # FK rotation vector -> the xyz euler angles the policy was trained on
+        state[rot] = R.from_rotvec(state[rot]).as_euler("xyz")
+    state = state.astype(np.float32)
     for d, low in WRAP_LOW.items():
         state[d] = np.mod(state[d] - low, 2 * np.pi) + low
     return state
@@ -133,7 +140,8 @@ def run_episode(env, conn, task: str, seed: int, max_steps: int, record: bool) -
         action = decode(conn.recv()["action"]).astype(np.float64)
         if not np.isfinite(action).all():
             raise RuntimeError(f"Non-finite action from policy: {action}")
-        action[EULER_DIMS] = np.mod(action[EULER_DIMS] + np.pi, 2 * np.pi) - np.pi  # RoboEval's [-pi, pi)
+        for rot in ROT_SLICES:  # policy's xyz euler angles -> the rotation vector RoboEval's EE action mode expects
+            action[rot] = R.from_euler("xyz", action[rot]).as_rotvec()
         action = np.clip(action, env.action_space.low, env.action_space.high)  # e.g. gripper slightly < 0
         obs, reward, terminated, truncated, info = env.step(action)
         if env.success:

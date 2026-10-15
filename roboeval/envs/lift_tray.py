@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC
 
 import numpy as np
@@ -18,10 +19,12 @@ from roboeval.utils.metric_rollout import MetricRolloutEval
 # half-thickness and grows by however far the tray is lifted off the table).
 _TRAY_HALF_HEIGHT = 0.02694
 
-# Steps of free physics integration used after teleporting the tray, so it
-# freefalls onto the table and the recorded resting height reflects the
-# actual on-table position rather than the spawn height.
-_TRAY_SETTLE_STEPS = 60
+# Upper bound on physics steps (0.002 s each) used after teleporting the tray,
+# so it freefalls onto the table and the recorded resting height reflects the
+# actual on-table position rather than the spawn height. Settling stops as soon
+# as the tray rests on a cabinet; a tray spawned at z = 1.0 m needs ~80 steps
+# to land, so this cap is only a safeguard.
+_TRAY_SETTLE_STEPS = 500
 
 
 class _TrayEnv(RoboEvalEnv, ABC, MetricRolloutEval):
@@ -60,13 +63,18 @@ class _TrayEnv(RoboEvalEnv, ABC, MetricRolloutEval):
 
         The robot is left at its reset actuator targets, so it remains
         stationary while gravity pulls the tray down. Returns once the tray
-        is roughly static or ``steps`` physics steps have elapsed.
+        rests on a cabinet (in contact and roughly static) or ``steps`` physics
+        steps have elapsed. 
         """
         self._zero_tray_velocity()
         for _ in range(steps):
             self._mojo.step()
-            if self.breakfast_tray.is_static():
-                break
+            on_cabinet = self.breakfast_tray.is_colliding(self.table) or self.breakfast_tray.is_colliding(
+                self.target_table
+            )
+            if on_cabinet and self.breakfast_tray.is_static():
+                return
+        warnings.warn(f"Tray did not come to rest on a cabinet within {steps} physics steps")
     
 
 # ----------------------------------- Lift Tray Tasks -----------------------------------
