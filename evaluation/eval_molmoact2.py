@@ -38,7 +38,7 @@ from roboeval.utils.shared import find_class_in_module
 
 AUTHKEY = b"molmoact2-roboeval"
 SERVER_SCRIPT = Path(__file__).resolve().parent / "molmoact2_policy_server.py"
-CAMERAS = ("head", "left_wrist", "right_wrist")
+CAMERAS = ("head", "left_wrist", "right_wrist")  
 RESOLUTION = 256
 """
     (Hongrui's comment)
@@ -82,14 +82,15 @@ def start_policy_server(cfg: dict) -> tuple[subprocess.Popen, object]:
             time.sleep(5)
 
 
-def make_env(variant: str):
+def make_env(variant: str, camera_pos: dict):
     env_cls = find_class_in_module(roboeval.envs, variant)
     if env_cls is None:
         raise ValueError(f"Unknown RoboEval task variant {variant!r}")
     return env_cls(
         action_mode=JointPositionActionMode(absolute=True, ee=True, floating_base=True, floating_dofs=[]),
         observation_config=ObservationConfig(
-            cameras=[CameraConfig(name=c, rgb=True, depth=False, resolution=(RESOLUTION, RESOLUTION)) for c in CAMERAS]
+            cameras=[CameraConfig(name=c, rgb=True, depth=False, resolution=(RESOLUTION, RESOLUTION),
+                                  pos=camera_pos.get(c)) for c in CAMERAS]
         ),
         render_mode=None,
         robot_cls=BimanualPanda,
@@ -188,7 +189,8 @@ def main() -> None:
     sources = [json.loads(l) for l in (Path(cfg["dataset_root"]) / "meta/roboeval_source.jsonl").read_text().splitlines()]
     task_of = {s["variant"]: s["task"] for s in sources}
     variants = cfg.get("tasks") or sorted(task_of) # if cfg tasks is empty, use sorted(task_of)
-    max_steps = int(np.ceil(cfg["max_steps_factor"] * max(s["length"] for s in sources))) 
+    max_steps = int(np.ceil(cfg["max_steps_factor"] * max(s["length"] for s in sources)))
+    camera_pos = cfg.get("cameras")
 
     episodes_path = out_dir / "episodes.jsonl"
     done = [json.loads(l) for l in episodes_path.read_text().splitlines()] if episodes_path.exists() else []
@@ -200,7 +202,7 @@ def main() -> None:
             todo = [i for i in range(cfg["episodes_per_task"]) if (variant, i) not in finished]
             if not todo:
                 continue
-            env = make_env(variant)
+            env = make_env(variant, camera_pos)
             """
                 (Hongrui's comment)
                 the smallest demo seed is 2,621,411

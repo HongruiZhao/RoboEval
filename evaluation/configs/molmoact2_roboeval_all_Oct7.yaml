@@ -15,3 +15,11 @@ episodes_per_task: 50
 seed: 0                 # episode i uses seed + i
 max_steps_factor: 1.25   # episode cap (all variants) = factor x longest training demo of any variant
 videos_per_task: 10      # record the first N episodes of each variant (videos/<variant>/epXX.mp4)
+
+# Camera mount positions [x, y, z] relative to each camera's parent body, as the training data was rendered
+# (pre-merge RoboEval). The upstream merge moved them in roboeval/robots/configs/panda.py; orientation and fov
+# are unchanged. null = keep RoboEval's current default position for that camera.
+cameras:
+  head: [-0.4, 0.0, 1.35]
+  left_wrist: [0.05, 0.0, 0.07]
+  right_wrist: [0.05, 0.0, 0.07]
